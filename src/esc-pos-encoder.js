@@ -1,12 +1,6 @@
 const iconv = require('iconv-lite');
 const linewrap = require('linewrap');
 
-if(typeof process == 'undefined') { // ignore functions in electron
-  const {createCanvas} = require('canvas')
-  const Dither = require('canvas-dither')
-  const Flatten = require('canvas-flatten')
-}
-
 /**
  * Create a byte stream based on commands for ESC/POS printers
  */
@@ -16,9 +10,15 @@ class EscPosEncoder {
      *
      * @param  {object}   options   Object containing configuration options
     */
-  constructor(options) {
+  constructor(type, options) {
     this._reset(options);
     this.raw(Buffer.from([0x1b, 0x74, 40])) // Set page to ISO8859-15
+
+    if(type == 'cordova') { // ignore functions in electron
+      const {createCanvas} = require('canvas')
+      const Dither = require('canvas-dither')
+      const Flatten = require('canvas-flatten')
+    }
   }
 
   /**
