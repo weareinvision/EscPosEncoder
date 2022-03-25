@@ -16,6 +16,7 @@ class EscPosEncoder {
     */
   constructor(options) {
     this._reset(options);
+    this.raw(Buffer.from([0x1b, 0x74, 40])) // Set page to ISO8859-15
   }
 
   /**
@@ -25,13 +26,17 @@ class EscPosEncoder {
     */
   _reset(options) {
     options = Object.assign({
+      width: null,
+      embedded: false,
       legacy: false,
     }, options);
+
+    //this._embedded = this._options.width && this._options.embedded;
 
     this._legacy = options.legacy;
 
     this._buffer = [];
-    this._codepage = 'ascii';
+    this._codepage = 'ISO8859-15';
 
     this._state = {
       'bold': false,
@@ -399,6 +404,97 @@ class EscPosEncoder {
   }
 
   /**
+     * Insert a table
+     *
+     * @param  {array}           columns  The column definitions
+     * @param  {array}           data     Array containing rows. Each row is an array containing cells.
+     *                                    Each cell can be a string value, or a callback function.
+     *                                    The first parameter of the callback is the encoder object on
+     *                                    which the function can call its methods.
+     * @return {object}                   Return the object, for easy chaining commands
+     *
+     */
+   table(columns, data) {
+
+    for (let r = 0; r < data.length; r++) {
+      const lines = [];
+      let maxLines = 0;
+
+      for (let c = 0; c < columns.length; c++) {
+        const cell = [];
+
+        if (typeof data[r][c] === 'string') {
+          const w = linewrap(columns[c].width, {lineBreak: '\n'});
+          const fragments = w(data[r][c]).split('\n');
+
+          for (let f = 0; f < fragments.length; f++) {
+            if (columns[c].align == 'right') {
+              cell[f] = this._encode(fragments[f].padStart(columns[c].width));
+            } else {
+              cell[f] = this._encode(fragments[f].padEnd(columns[c].width));
+            }
+          }
+        }
+
+        if (typeof data[r][c] === 'object') {
+          const textInfo = data[r][c] // ['string', bool(bold)]
+          const w = linewrap(columns[c].width, {lineBreak: '\n'});
+          const fragments = w(textInfo[0]).split('\n');
+          let bold = []
+
+          textInfo[1] !== undefined ? bold = [0x1b, 0x45, Number(textInfo[1])] : []
+
+          for (let f = 0; f < fragments.length; f++) {
+            if (columns[c].align == 'right') {
+              cell[f] = bold.concat(this._encode(fragments[f].padStart(columns[c].width)));
+            } else {
+              cell[f] = bold.concat(this._encode(fragments[f].padEnd(columns[c].width)));
+            }
+          }
+        }
+
+        maxLines = Math.max(maxLines, cell.length);
+        lines[c] = cell;
+      }
+
+      for (let c = 0; c < columns.length; c++) {
+        if (lines[c].length < maxLines) {
+          for (let p = lines[c].length; p < maxLines; p++) {
+            let verticalAlign = 'top';
+            if (typeof columns[c].verticalAlign !== 'undefined') {
+              verticalAlign = columns[c].verticalAlign;
+            }
+
+            if (verticalAlign == 'bottom') {
+              lines[c].unshift((new Array(columns[c].width)).fill(0x20));
+            } else {
+              lines[c].push((new Array(columns[c].width)).fill(0x20));
+            }
+          }
+        }
+      }
+
+      for (let l = 0; l < maxLines; l++) {
+        for (let c = 0; c < columns.length; c++) {
+          if (typeof columns[c].marginLeft !== 'undefined') {
+            this.raw((new Array(columns[c].marginLeft)).fill(0x20));
+          }
+
+          this.raw(lines[c][l]);
+
+          if (typeof columns[c].marginRight !== 'undefined') {
+            this.raw((new Array(columns[c].marginRight)).fill(0x20));
+          }
+        }
+
+        this.newline();
+      }
+    }
+
+    return this;
+  }
+
+  /**
      * Barcode
      *
      * @param  {string}           value  the value of the barcode
@@ -690,38 +786,6 @@ class EscPosEncoder {
 
     this._queue([
       0x1d, 0x56, data,
-    ]);
-
-    return this;
-  }
-
-  /**
-     * Pulse
-     *
-     * @param  {number}          device  0 or 1 for on which pin the device is connected, default of 0
-     * @param  {number}          on      Time the pulse is on in milliseconds, default of 100
-     * @param  {number}          off     Time the pulse is off in milliseconds, default of 500
-     * @return {object}                  Return the object, for easy chaining commands
-     *
-     */
-  pulse(device, on, off) {
-    if (typeof device === 'undefined') {
-      device = 0;
-    }
-
-    if (typeof on === 'undefined') {
-      on = 100;
-    }
-
-    if (typeof off === 'undefined') {
-      off = 500;
-    }
-
-    on = Math.min(500, Math.round(on / 2));
-    off = Math.min(500, Math.round(off / 2));
-
-    this._queue([
-      0x1b, 0x70, device ? 1 : 0, on & 0xff, off & 0xff,
     ]);
 
     return this;
