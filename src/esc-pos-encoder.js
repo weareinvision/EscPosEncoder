@@ -1,9 +1,11 @@
 const iconv = require('iconv-lite');
 const linewrap = require('linewrap');
-const {createCanvas} = require('canvas');
-const Dither = require('canvas-dither');
-const Flatten = require('canvas-flatten');
 
+if(typeof process == 'undefined') { // ignore functions in electron
+  const {createCanvas} = require('canvas')
+  const Dither = require('canvas-dither')
+  const Flatten = require('canvas-flatten')
+}
 
 /**
  * Create a byte stream based on commands for ESC/POS printers
