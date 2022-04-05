@@ -18,6 +18,8 @@ class EscPosEncoder {
       const {createCanvas} = require('canvas')
       const Dither = require('canvas-dither')
       const Flatten = require('canvas-flatten')
+
+      this.canvas = { create: createCanvas, dither: Dither, flatten: Flatten }
     }
   }
 
@@ -687,18 +689,18 @@ class EscPosEncoder {
       threshold = 128;
     }
 
-    const canvas = createCanvas(width, height);
+    const canvas = this.canvas.create(width, height);
     const context = canvas.getContext('2d');
     context.drawImage(element, 0, 0, width, height);
     let image = context.getImageData(0, 0, width, height);
 
-    image = Flatten.flatten(image, [0xff, 0xff, 0xff]);
+    image = this.canvas.flatten.flatten(image, [0xff, 0xff, 0xff]);
 
     switch (algorithm) {
-      case 'threshold': image = Dither.threshold(image, threshold); break;
-      case 'bayer': image = Dither.bayer(image, threshold); break;
-      case 'floydsteinberg': image = Dither.floydsteinberg(image); break;
-      case 'atkinson': image = Dither.atkinson(image); break;
+      case 'threshold': image = this.canvas.dither.threshold(image, threshold); break;
+      case 'bayer': image = this.canvas.dither.bayer(image, threshold); break;
+      case 'floydsteinberg': image = this.canvas.dither.floydsteinberg(image); break;
+      case 'atkinson': image = this.canvas.dither.atkinson(image); break;
     }
 
     const getPixel = (x, y) => x < width && y < height ? (image.data[((width * y) + x) * 4] > 0 ? 0 : 1) : 0;
