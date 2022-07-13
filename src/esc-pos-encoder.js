@@ -6,21 +6,16 @@ const linewrap = require('linewrap');
  */
 class EscPosEncoder {
   /**
-     * Create a new object
-     *
-     * @param  {object}   options   Object containing configuration options
-    */
-  constructor(type, options) {
+   * Create a new object
+   *
+   * @param  {object|undefined}   canvas    Object containing canvas instance
+   * @param  {object|undefined}   options   Object containing configuration options
+   */
+  constructor(canvas, options) {
     this._reset(options);
     this.raw(Buffer.from([0x1b, 0x74, 40])) // Set page to ISO8859-15
 
-    if(type == 'cordova') { // ignore functions in electron
-      const {createCanvas} = require('canvas')
-      const Dither = require('canvas-dither')
-      const Flatten = require('canvas-flatten')
-
-      this.canvas = { create: createCanvas, dither: Dither, flatten: Flatten }
-    }
+    this.canvas = canvas
   }
 
   /**
@@ -418,7 +413,7 @@ class EscPosEncoder {
      * @return {object}                   Return the object, for easy chaining commands
      *
      */
-   table(columns, data) {
+  table(columns, data) {
 
     for (let r = 0; r < data.length; r++) {
       const lines = [];
@@ -688,6 +683,8 @@ class EscPosEncoder {
     if (typeof threshold === 'undefined') {
       threshold = 128;
     }
+
+    if (this.canvas === undefined) return
 
     const canvas = this.canvas.create(width, height);
     const context = canvas.getContext('2d');

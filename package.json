@@ -2,18 +2,18 @@
   "name": "esc-pos-encoder",
   "version": "2.0.0",
   "description": "Create a set of commands that can be send to any receipt printer that supports ESC/POS",
-  "main": "src/esc-pos-encoder.js",
+  "exports": {
+    "./desktop": "./dist/desktop.esm.js",
+    "./mobile": "./dist/mobile.esm.js"
+  },
   "scripts": {
-    "bundle": "browserify src/esc-pos-encoder.js --standalone EscPosEncoder -o dist/esc-pos-encoder.js",
-    "uglify": "uglifyjs dist/esc-pos-encoder.js -cm --overwrite -o dist/esc-pos-encoder.js",
-    "build": "npm run bundle && npm run uglify",
-    "lint": "eslint --fix src/esc-pos-encoder.js",
-    "mocha": "mocha test/",
-    "test": "npm run lint && npm run mocha"
+    "clean": "rimraf dist",
+    "build": "rimraf dist && rollup -c",
+    "test": "mocha test/"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NielsLeenheer/EscPosEncoder.git"
+    "url": "git+https://github.com/weareinvision/EscPosEncoder.git"
   },
   "keywords": [
     "pos",
@@ -23,21 +23,18 @@
   ],
   "author": "Niels Leenheer",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/NielsLeenheer/EscPosEncoder/issues"
-  },
-  "homepage": "https://github.com/NielsLeenheer/EscPosEncoder#readme",
   "devDependencies": {
-    "browserify": "^17.0.0",
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "canvas": "^2.9.3",
     "chai": "^4.3.4",
-    "eslint": "^7.31.0",
-    "eslint-config-google": "^0.14.0",
     "mocha": "^9.0.2",
-    "uglify-es": "^3.3.9"
+    "rimraf": "^3.0.2",
+    "rollup": "^2.76.0"
   },
   "dependencies": {
     "buffer-to-uint8array": "^1.1.0",
-    "canvas": "^2.8.0",
     "canvas-dither": "^1.0.1",
     "canvas-flatten": "^1.0.1",
     "iconv-lite": "^0.6.3",
