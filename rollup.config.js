@@ -12,7 +12,7 @@ export default [
     plugins: [
       nodeResolve({
         browser: true,
-        preferBuiltins: true,
+        preferBuiltins: false,
       }),
       commonjs(),
       json(),
@@ -27,7 +27,7 @@ export default [
     plugins: [
       nodeResolve({
         browser: true,
-        preferBuiltins: true,
+        preferBuiltins: false,
       }),
       commonjs(),
       json(),
